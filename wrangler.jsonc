@@ -16,5 +16,10 @@
   // Durable Object migrations. Flue generates one DO class per agent
   // (FieldTrip -> FlueFieldTripAgent), but YOU own the migration history.
   // Checkpoint 1 adds the first entry here. Append; never rewrite deployed entries.
-  "migrations": []
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["FlueFieldTripAgent"]
+    }
+  ]
 }
