@@ -26,5 +26,8 @@
 
   // cp5: container sandbox (class exported from src/cloudflare.ts, image from ./Dockerfile).
   "durable_objects": { "bindings": [{ "name": "Sandbox", "class_name": "Sandbox" }] },
-  "containers": [{ "class_name": "Sandbox", "image": "./Dockerfile", "max_instances": 10 }]
+  "containers": [{ "class_name": "Sandbox", "image": "./Dockerfile", "max_instances": 10 }],
+
+  // cp6: Workers Logs + Traces (dashboard → Workers & Pages → field-trip-agent → Observability).
+  "observability": { "enabled": true, "traces": { "enabled": true } }
 }

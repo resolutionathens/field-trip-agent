@@ -81,6 +81,7 @@ export const getForecast = defineTool({
         weather_code: number[];
       };
     };
+    console.log({ event: 'forecast', latitude: data.latitude, longitude: data.longitude, days: daily.time.length }); // cp6: Workers Logs
     return {
       output: daily.time.map((date, i) => ({
         date,
