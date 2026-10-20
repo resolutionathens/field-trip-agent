@@ -1,6 +1,6 @@
 'use agent';
 
-import { type AgentProps, useModel, usePersistentState, useSandbox, useSubagent, useTool } from '@flue/runtime';
+import { type AgentProps, useDataWriter, useModel, usePersistentState, useSandbox, useSubagent, useTool } from '@flue/runtime';
 import { cloudflareSandbox } from '@flue/runtime/cloudflare';
 import { getSandbox } from '@cloudflare/sandbox';
 import { env } from 'cloudflare:workers';
@@ -8,6 +8,7 @@ import * as v from 'valibot';
 import { geocodeCity, getForecast } from '../tools/weather.ts';
 import { findNearbyPlaces } from '../tools/wikipedia.ts';
 import { venueScout } from '../subagents/venue-scout.ts';
+import { bookOffsite } from '../tools/booking.ts';
 
 // The trip brief the agent remembers for this conversation.
 type TripBrief = {
@@ -26,6 +27,10 @@ export function FieldTrip({ id }: AgentProps) {
   // Shaped like React's useState, but it survives restarts and redeploys.
   const [brief, setBrief] = usePersistentState<TripBrief>('brief', {});
 
+  // cp2 bonus: state is what the agent remembers; a data writer is how it shows
+  // structured data to the UI (rendered as a `data-brief` card, never seen by the model).
+  const writeBrief = useDataWriter('brief');
+
   // Tools can write state. The write commits together with the tool call.
   useTool({
     name: 'save_trip_brief',
@@ -43,7 +48,9 @@ export function FieldTrip({ id }: AgentProps) {
       const updates = Object.fromEntries(
         Object.entries(data).filter(([, value]) => value !== undefined),
       ) as TripBrief;
-      setBrief((previous) => ({ ...previous, ...updates }));
+      const next = { ...brief, ...updates };
+      setBrief(next);
+      writeBrief(next);
       return { output: { saved: updates } };
     },
   });
@@ -66,6 +73,9 @@ export function FieldTrip({ id }: AgentProps) {
   useTool({ name: 'open_workspace', description: 'Attach the file workspace (read/write/bash tools).', async run() { setWorkspace(true); return 'Workspace attached.'; } });
   if (workspace) useSandbox(cloudflareSandbox(getSandbox(env.Sandbox, id)));
 
+  // cp7: a durable tool, offered only once there's enough of a brief to book.
+  if (brief.city && brief.startDate && brief.headcount) useTool(bookOffsite);
+
   // The agent re-renders before every model call, so these instructions
   // always reflect the latest saved brief.
   const hasBrief = Object.keys(brief).length > 0;
@@ -82,7 +92,8 @@ Rules:
    c. Call \`task\` ONCE with agent \`venue-scout\` for all 3 places. The scout cannot see this conversation, so the prompt must be a complete briefing: the exact place titles, the city, the headcount, and the interests.
    d. Combine the results into a short plan, keeping the links. If you know the forecast, suggest outdoor places for dry days and indoor ones for rainy days.
 5. For an itinerary: if you have no \`write\` tool yet, call \`open_workspace\` first. Then \`write\` it to itinerary.md (one section per day: places, timing, weather), then \`read\` it to check. Do not repeat the file in your reply (the user sees the read result); reply in one sentence.
-6. Keep replies short: at most 120 words unless the user asks for more detail.
+6. To book: call \`book_offsite\` ONCE with the city, dates and headcount from the saved brief (no end date: use the start date). If you don't have that tool, say which brief details are missing. Report the venue, total and confirmation number.
+7. Keep replies short: at most 120 words unless the user asks for more detail.
 
 Today is ${today}.
 

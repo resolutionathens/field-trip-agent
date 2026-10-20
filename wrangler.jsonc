@@ -21,11 +21,18 @@
       "tag": "v1",
       "new_sqlite_classes": ["FlueFieldTripAgent"]
     },
-    { "tag": "v2", "new_sqlite_classes": ["Sandbox"] }
+    { "tag": "v2", "new_sqlite_classes": ["Sandbox"] },
+    { "tag": "v3", "new_sqlite_classes": ["BookingApi"] }
   ],
 
   // cp5: container sandbox (class exported from src/cloudflare.ts, image from ./Dockerfile).
-  "durable_objects": { "bindings": [{ "name": "Sandbox", "class_name": "Sandbox" }] },
+  "durable_objects": {
+    "bindings": [
+      { "name": "Sandbox", "class_name": "Sandbox" },
+      // cp7: mock booking API (class exported from src/cloudflare.ts).
+      { "name": "BookingApi", "class_name": "BookingApi" }
+    ]
+  },
   "containers": [{ "class_name": "Sandbox", "image": "./Dockerfile", "max_instances": 10 }],
 
   // cp6: Workers Logs + Traces (dashboard → Workers & Pages → field-trip-agent → Observability).

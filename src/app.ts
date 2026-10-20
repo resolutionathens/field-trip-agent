@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { env } from 'cloudflare:workers';
 import { createAgentRouter } from '@flue/runtime/routing';
 import { FieldTrip } from './agents/field-trip.ts';
 import chatUi from './ui/index.html?raw';
@@ -12,5 +13,7 @@ const app = new Hono();
 app.get('/', (c) => c.html(chatUi));
 app.get('/api/ping', (c) => c.text('pong'));
 app.route('/agents/field-trip', createAgentRouter(FieldTrip));
+// cp7: every call the mock supplier received, to check a booking happened exactly once.
+app.get('/api/bookings', async (c) => c.json(await env.BookingApi.get(env.BookingApi.idFromName('supplier')).log()));
 
 export default app;
