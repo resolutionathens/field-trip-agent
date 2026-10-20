@@ -20,6 +20,11 @@
     {
       "tag": "v1",
       "new_sqlite_classes": ["FlueFieldTripAgent"]
-    }
-  ]
+    },
+    { "tag": "v2", "new_sqlite_classes": ["Sandbox"] }
+  ],
+
+  // cp5: container sandbox (class exported from src/cloudflare.ts, image from ./Dockerfile).
+  "durable_objects": { "bindings": [{ "name": "Sandbox", "class_name": "Sandbox" }] },
+  "containers": [{ "class_name": "Sandbox", "image": "./Dockerfile", "max_instances": 10 }]
 }

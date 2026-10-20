@@ -1,6 +1,9 @@
 'use agent';
 
-import { useModel, usePersistentState, useSubagent, useTool } from '@flue/runtime';
+import { type AgentProps, useModel, usePersistentState, useSandbox, useSubagent, useTool } from '@flue/runtime';
+import { cloudflareSandbox } from '@flue/runtime/cloudflare';
+import { getSandbox } from '@cloudflare/sandbox';
+import { env } from 'cloudflare:workers';
 import * as v from 'valibot';
 import { geocodeCity, getForecast } from '../tools/weather.ts';
 import { findNearbyPlaces } from '../tools/wikipedia.ts';
@@ -16,7 +19,7 @@ type TripBrief = {
   interests?: string[];
 };
 
-export function FieldTrip() {
+export function FieldTrip({ id }: AgentProps) {
   useModel('cloudflare/@cf/google/gemma-4-26b-a4b-it');
 
   // Durable, per-conversation state (stored in this conversation's Durable Object).
@@ -57,6 +60,9 @@ export function FieldTrip() {
   // with its own tools, and only its final answer comes back here.
   useSubagent(venueScout);
 
+  // A Linux container per conversation (adds read/write/edit/bash/grep/glob tools).
+  useSandbox(cloudflareSandbox(getSandbox(env.Sandbox, id)));
+
   // The agent re-renders before every model call, so these instructions
   // always reflect the latest saved brief.
   const hasBrief = Object.keys(brief).length > 0;
@@ -72,7 +78,8 @@ Rules:
    b. Pick the 3 places that best fit the brief (skip stations, offices, hospitals, embassies, companies, events).
    c. Call \`task\` ONCE with agent \`venue-scout\` for all 3 places. The scout cannot see this conversation, so the prompt must be a complete briefing: the exact place titles, the city, the headcount, and the interests.
    d. Combine the results into a short plan, keeping the links. If you know the forecast, suggest outdoor places for dry days and indoor ones for rainy days.
-5. Keep replies short: at most 120 words unless the user asks for more detail.
+5. For an itinerary: \`write\` it to itinerary.md (one section per day: places, timing, weather), then \`read\` it to check. Do not repeat the file in your reply (the user sees the read result); reply in one sentence.
+6. Keep replies short: at most 120 words unless the user asks for more detail.
 
 Today is ${today}.
 
