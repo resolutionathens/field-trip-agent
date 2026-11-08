@@ -13,7 +13,11 @@
     "deploy": "vite build && wrangler deploy",
     "check": "node scripts/check.mjs",
     "smoke": "node scripts/smoke.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "node scripts/patch-container-alarm.mjs",
+    "predeploy": "node scripts/patch-container-alarm.mjs",
+    "test:alarm": "node --test test/container-alarm.test.mjs",
+    "prebuild": "node scripts/patch-container-alarm.mjs"
   },
   "dependencies": {
     "@cloudflare/sandbox": "0.12.10",
@@ -29,6 +33,8 @@
     "@flue/vite": "2.0.0",
     "typescript": "7.0.2",
     "vite": "8.3.1",
-    "wrangler": "4.143.0"
+    "wrangler": "4.143.0",
+    "esbuild": "0.28.2",
+    "miniflare": "5.20260926.0-alpha"
   }
 }
