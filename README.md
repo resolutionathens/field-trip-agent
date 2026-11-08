@@ -230,3 +230,15 @@ hand-writing several checkpoints at once.
     code forward.
 13. `src/ui/index.html` is given scaffolding. Don't edit it unless the attendee
     asks. It already renders tool calls and any `data-<name>` parts.
+
+### Container alarm safeguard (SR-6063)
+
+The `workshop` deployment applies `scripts/patch-container-alarm.mjs` after install
+and before build/deploy. Unknown scheduled callbacks retain their payload and
+retry after five minutes instead of re-arming an expired alarm. An SDK upgrade
+requires review before this narrowly checked patch will apply.
+
+`npm run test:alarm` exercises the installed Containers SDK alarm with real
+Workers SQLite and simulated container lifecycle calls. Remove the patch only
+when an upstream replacement passes these regressions. If install scripts are
+disabled, run the patch explicitly before invoking Vite or Wrangler directly.
